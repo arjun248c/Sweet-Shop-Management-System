@@ -30,7 +30,6 @@ export const SweetModel = {
 
     async update(id: number, sweet: Partial<Sweet>): Promise<void> {
         const db = getDb();
-        // Dynamically build query
         const fields = Object.keys(sweet).map(key => `${key} = ?`).join(', ');
         const values = Object.values(sweet);
         await db.run(`UPDATE sweets SET ${fields} WHERE id = ?`, [...values, id]);
@@ -48,5 +47,19 @@ export const SweetModel = {
             'SELECT * FROM sweets WHERE name LIKE ? OR category LIKE ?',
             [searchPattern, searchPattern]
         );
+    },
+
+    async updateQuantity(id: number, delta: number): Promise<void> {
+        const db = getDb();
+        // Verify current stock first if decreasing (application-level check for better error control)
+        if (delta < 0) {
+            const sweet = await this.findById(id);
+            if (!sweet) throw new Error('Sweet not found');
+            if (sweet.quantity + delta < 0) {
+                throw new Error('Insufficient stock');
+            }
+        }
+
+        await db.run('UPDATE sweets SET quantity = quantity + ? WHERE id = ?', [delta, id]);
     }
 };

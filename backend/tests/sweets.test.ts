@@ -16,10 +16,8 @@ describe('Sweets API', () => {
         await initializeDatabase();
         const db = getDb();
         await db.exec('DELETE FROM sweets');
-        await db.exec('DELETE FROM users'); // Clean users too just in case
+        await db.exec('DELETE FROM users');
 
-        // Create tokens for testing (mocking user existence not strictly needed if we trust middleware, 
-        // but good to be aligned)
         adminToken = jwt.sign({ userId: 1, username: 'admin', role: 'admin' }, SECRET_KEY);
         customerToken = jwt.sign({ userId: 2, username: 'customer', role: 'customer' }, SECRET_KEY);
     });
@@ -65,7 +63,6 @@ describe('Sweets API', () => {
     });
 
     it('should update a sweet (Admin only)', async () => {
-        // First get the sweet to find its ID
         const list = await request.get('/api/sweets').set('Authorization', `Bearer ${adminToken}`);
         const sweetId = list.body[0].id;
 
@@ -78,7 +75,6 @@ describe('Sweets API', () => {
     });
 
     it('should delete a sweet (Admin only)', async () => {
-        // First add another sweet to delete
         const addRes = await request.post('/api/sweets')
             .set('Authorization', `Bearer ${adminToken}`)
             .send({
@@ -94,9 +90,70 @@ describe('Sweets API', () => {
 
         assert.strictEqual(response.status, 200);
 
-        // Verify it's gone
         const check = await request.get('/api/sweets').set('Authorization', `Bearer ${adminToken}`);
         const found = check.body.find((s: any) => s.id === sweetId);
         assert.strictEqual(found, undefined);
+    });
+
+    it('should allow customer to purchase a sweet', async () => {
+        const addRes = await request.post('/api/sweets')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({ name: 'Buy Me', category: 'Test', price: 1.00, quantity: 10 });
+        const sweetId = addRes.body.id;
+
+        const response = await request.post(`/api/sweets/${sweetId}/purchase`)
+            .set('Authorization', `Bearer ${customerToken}`)
+            .send({ quantity: 2 });
+
+        assert.strictEqual(response.status, 200);
+        assert.strictEqual(response.body.message, 'Purchase successful');
+
+        const check = await request.get('/api/sweets').set('Authorization', `Bearer ${adminToken}`);
+        const sweet = check.body.find((s: any) => s.id === sweetId);
+        assert.strictEqual(sweet.quantity, 8);
+    });
+
+    it('should NOT allow purchase if insufficient stock', async () => {
+        const addRes = await request.post('/api/sweets')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({ name: 'Limited', category: 'Test', price: 1.00, quantity: 1 });
+        const sweetId = addRes.body.id;
+
+        const response = await request.post(`/api/sweets/${sweetId}/purchase`)
+            .set('Authorization', `Bearer ${customerToken}`)
+            .send({ quantity: 2 });
+
+        assert.strictEqual(response.status, 400);
+        assert.strictEqual(response.body.error, 'Insufficient stock');
+    });
+
+    it('should allow admin to restock a sweet', async () => {
+        const addRes = await request.post('/api/sweets')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({ name: 'Restock Me', category: 'Test', price: 1.00, quantity: 5 });
+        const sweetId = addRes.body.id;
+
+        const response = await request.post(`/api/sweets/${sweetId}/restock`)
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({ quantity: 5 });
+
+        assert.strictEqual(response.status, 200);
+
+        const check = await request.get('/api/sweets').set('Authorization', `Bearer ${adminToken}`);
+        const sweet = check.body.find((s: any) => s.id === sweetId);
+        assert.strictEqual(sweet.quantity, 10);
+    });
+
+    it('should NOT allow customer to restock', async () => {
+        const addRes = await request.post('/api/sweets')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({ name: 'No Touch', category: 'Test', price: 1.00, quantity: 5 });
+        const sweetId = addRes.body.id;
+
+        const response = await request.post(`/api/sweets/${sweetId}/restock`)
+            .set('Authorization', `Bearer ${customerToken}`)
+            .send({ quantity: 5 });
+
+        assert.strictEqual(response.status, 403);
     });
 });

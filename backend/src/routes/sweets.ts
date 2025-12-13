@@ -69,4 +69,58 @@ router.delete('/:id', authenticateToken, requireAdmin, async (req, res) => {
     }
 });
 
+// Purchase a sweet (Protected - Any user)
+// @ts-ignore
+router.post('/:id/purchase', authenticateToken, async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const { quantity } = req.body;
+
+        if (!quantity || quantity <= 0) {
+            // @ts-ignore
+            return res.status(400).json({ error: 'Invalid quantity' });
+        }
+
+        try {
+            // Decrease quantity (pass negative delta)
+            await SweetModel.updateQuantity(id, -quantity);
+            res.json({ message: 'Purchase successful' });
+        } catch (err: any) {
+            if (err.message === 'Insufficient stock') {
+                // @ts-ignore
+                return res.status(400).json({ error: 'Insufficient stock' });
+            } else if (err.message === 'Sweet not found') {
+                // @ts-ignore
+                return res.status(404).json({ error: 'Sweet not found' });
+            }
+            throw err;
+        }
+    } catch (error) {
+        // @ts-ignore
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Restock a sweet (Admin only)
+// @ts-ignore
+router.post('/:id/restock', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const { quantity } = req.body;
+
+        if (!quantity || quantity <= 0) {
+            // @ts-ignore
+            return res.status(400).json({ error: 'Invalid quantity' });
+        }
+
+        await SweetModel.updateQuantity(id, quantity);
+        res.json({ message: 'Restock successful' });
+    } catch (error) {
+        // @ts-ignore
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 export default router;
