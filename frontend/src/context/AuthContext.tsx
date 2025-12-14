@@ -18,8 +18,21 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-    const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+    const [user, setUser] = useState<User | null>(() => {
+        const storedToken = localStorage.getItem('token');
+        if (storedToken) {
+            try {
+                const decoded = jwtDecode<User>(storedToken);
+                if (decoded.exp * 1000 > Date.now()) {
+                    return decoded;
+                }
+            } catch (e) {
+                return null;
+            }
+        }
+        return null;
+    });
 
     useEffect(() => {
         if (token) {
