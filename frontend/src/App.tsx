@@ -6,6 +6,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import SweetsList from './pages/SweetsList';
 import SweetForm from './pages/SweetForm';
+import Cart from './pages/Cart';
+import Orders from './pages/Orders';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
@@ -21,6 +23,7 @@ function App() {
       <Route element={<Layout />}>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+
         <Route
           path="/sweets"
           element={
@@ -29,6 +32,25 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/cart"
+          element={
+            <ProtectedRoute>
+              <Cart />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/orders"
+          element={
+            <ProtectedRoute>
+              <Orders />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/sweets/new"
           element={
@@ -37,6 +59,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/sweets/:id/edit"
           element={
@@ -45,6 +68,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+
         <Route path="/" element={<Navigate to="/sweets" replace />} />
       </Route>
     </Routes>

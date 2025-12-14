@@ -3,6 +3,7 @@ import cors from 'cors';
 import { initializeDatabase } from './database';
 import authRoutes from './routes/auth';
 import sweetsRoutes from './routes/sweets';
+import orderRoutes from './routes/orders';
 
 const app = express();
 
@@ -16,5 +17,6 @@ if (process.env.NODE_ENV !== 'test') {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/sweets', sweetsRoutes);
+app.use('/api/orders', orderRoutes);
 
 export default app;

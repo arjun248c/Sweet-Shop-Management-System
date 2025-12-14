@@ -24,6 +24,24 @@ export const initializeDatabase = async () => {
       price REAL NOT NULL,
       quantity INTEGER NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS orders (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      total_amount REAL NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS order_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      order_id INTEGER NOT NULL,
+      sweet_id INTEGER NOT NULL,
+      quantity INTEGER NOT NULL,
+      price_at_purchase REAL NOT NULL,
+      FOREIGN KEY(order_id) REFERENCES orders(id),
+      FOREIGN KEY(sweet_id) REFERENCES sweets(id)
+    );
   `);
 
   console.log('Database initialized');

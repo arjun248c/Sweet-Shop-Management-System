@@ -55,7 +55,17 @@
     border-radius: 8px;
     font-size: 1rem;
     transition: all 0.3s ease;
-    background: rgba(255, 255, 255, 0.9);
+    background-color: #ffffff !important;
+    color: #000000 !important;
+}
+
+/* Fix for Chrome/Safari Autofill */
+.form-input:-webkit-autofill,
+.form-input:-webkit-autofill:hover,
+.form-input:-webkit-autofill:focus,
+.form-input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px white inset !important;
+    -webkit-text-fill-color: black !important;
 }
 
 .form-input:focus {

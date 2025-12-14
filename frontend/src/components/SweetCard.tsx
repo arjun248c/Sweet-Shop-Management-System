@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 import { useNavigate } from 'react-router-dom';
 import './SweetCard.css';
 
@@ -13,37 +14,43 @@ interface Sweet {
 
 interface SweetCardProps {
     sweet: Sweet;
-    onPurchase: (id: number, quantity: number) => Promise<void>;
     onRestock?: (id: number, quantity: number) => Promise<void>;
 }
 
-const SweetCard = ({ sweet, onPurchase, onRestock }: SweetCardProps) => {
+const SweetCard = ({ sweet, onRestock }: SweetCardProps) => {
     const { user } = useAuth();
+    const { addToCart } = useCart();
     const navigate = useNavigate();
-    const [isBuying, setIsBuying] = useState(false);
+
+    // Admin Restock State
     const [isRestocking, setIsRestocking] = useState(false);
-    const [quantityInput, setQuantityInput] = useState(1);
+    const [restockQuantity, setRestockQuantity] = useState(1);
     const [loading, setLoading] = useState(false);
 
-    const handleActionClick = (action: 'buy' | 'restock') => {
-        setQuantityInput(1);
-        if (action === 'buy') setIsBuying(true);
-        else setIsRestocking(true);
+    // Cart State
+    const [quantity, setQuantity] = useState(1);
+
+    const handleAddToCart = () => {
+        if (quantity <= 0) return;
+        addToCart({
+            sweetId: sweet.id,
+            name: sweet.name,
+            price: sweet.price,
+            quantity: quantity
+        });
+        alert(`Added ${quantity} ${sweet.name}(s) to cart!`);
+        setQuantity(1);
     };
 
-    const confirmAction = async () => {
-        if (quantityInput <= 0) return;
+    const handleRestock = async () => {
+        if (!onRestock) return;
         setLoading(true);
         try {
-            if (isBuying) {
-                await onPurchase(sweet.id, quantityInput);
-            } else if (isRestocking && onRestock) {
-                await onRestock(sweet.id, quantityInput);
-            }
+            await onRestock(sweet.id, restockQuantity);
+            setIsRestocking(false);
+            setRestockQuantity(1);
         } finally {
             setLoading(false);
-            setIsBuying(false);
-            setIsRestocking(false);
         }
     };
 
@@ -66,52 +73,66 @@ const SweetCard = ({ sweet, onPurchase, onRestock }: SweetCardProps) => {
                 </div>
 
                 <div className="card-actions">
-                    <button
-                        className="btn-buy"
-                        onClick={() => handleActionClick('buy')}
-                        disabled={isOutOfStock || loading}
-                    >
-                        {isOutOfStock ? 'Sold Out' : 'Buy'}
-                    </button>
+                    {// @ts-ignore
+                        user?.role !== 'admin' && (
+                            <div style={{ display: 'flex', gap: '0.5rem', width: '100%', alignItems: 'center' }}>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max={sweet.quantity}
+                                    value={quantity}
+                                    onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                                    style={{ width: '60px', padding: '0.5rem', borderRadius: '8px', border: '1px solid #ddd' }}
+                                    disabled={isOutOfStock}
+                                />
+                                <button
+                                    className="btn-buy"
+                                    onClick={handleAddToCart}
+                                    disabled={isOutOfStock}
+                                    style={{ flex: 1 }}
+                                >
+                                    {isOutOfStock ? 'Sold Out' : 'Add to Cart'}
+                                </button>
+                            </div>
+                        )}
 
                     {// @ts-ignore
                         user?.role === 'admin' && (
-                            <>
+                            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', width: '100%' }}>
                                 <button className="btn-admin" onClick={() => navigate(`/sweets/${sweet.id}/edit`)}>
                                     Edit
                                 </button>
-                                <button className="btn-admin" onClick={() => handleActionClick('restock')}>
+                                <button className="btn-admin" onClick={() => setIsRestocking(true)}>
                                     Restock
                                 </button>
-                            </>
+                            </div>
                         )}
                 </div>
             </div>
 
-            {(isBuying || isRestocking) && (
+            {isRestocking && (
                 <div className="purchase-modal-overlay">
                     <div className="purchase-modal">
-                        <h3>{isBuying ? `Purchase ${sweet.name}` : `Restock ${sweet.name}`}</h3>
+                        <h3>Restock {sweet.name}</h3>
                         <div className="form-group">
-                            <label>Quantity:</label>
+                            <label>Additional Quantity:</label>
                             <input
                                 type="number"
                                 min="1"
-                                max={isBuying ? sweet.quantity : undefined}
-                                value={quantityInput}
-                                onChange={(e) => setQuantityInput(parseInt(e.target.value))}
+                                value={restockQuantity}
+                                onChange={(e) => setRestockQuantity(parseInt(e.target.value))}
                                 className="form-input"
                             />
                         </div>
                         <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem' }}>
                             <button
                                 className="btn-buy"
-                                onClick={confirmAction}
-                                disabled={loading || (isBuying && (quantityInput > sweet.quantity || quantityInput < 1))}
+                                onClick={handleRestock}
+                                disabled={loading}
                             >
-                                {loading ? 'Processing...' : 'Confirm'}
+                                {loading ? 'Processing...' : 'Confirm Restock'}
                             </button>
-                            <button className="btn-admin" onClick={() => { setIsBuying(false); setIsRestocking(false); }}>
+                            <button className="btn-admin" onClick={() => setIsRestocking(false)}>
                                 Cancel
                             </button>
                         </div>

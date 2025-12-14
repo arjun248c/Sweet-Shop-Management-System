@@ -57,29 +57,6 @@ const SweetsList = () => {
         return () => clearTimeout(timeoutId);
     };
 
-    const handlePurchase = async (id: number, quantity: number) => {
-        try {
-            const response = await fetch(`/api/sweets/${id}/purchase`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ quantity })
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Purchase failed');
-            }
-
-            await fetchSweets(searchQuery);
-            alert('Purchase successful!');
-        } catch (err: any) {
-            alert(err.message);
-        }
-    };
-
     const handleRestock = async (id: number, quantity: number) => {
         try {
             const response = await fetch(`/api/sweets/${id}/restock`, {
@@ -137,7 +114,6 @@ const SweetsList = () => {
                         <SweetCard
                             key={sweet.id}
                             sweet={sweet}
-                            onPurchase={handlePurchase}
                             onRestock={handleRestock}
                         />
                     ))}
