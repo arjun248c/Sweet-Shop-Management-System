@@ -9,16 +9,17 @@ import { getDb } from '../database';
 
 export const UserModel = {
     async create(user: User): Promise<number> {
-        const db = getDb();
-        const result = await db.run(
-            'INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)',
+        const pool = getDb();
+        const result = await pool.query(
+            'INSERT INTO users (username, password_hash, role) VALUES ($1, $2, $3) RETURNING id',
             [user.username, user.password_hash, user.role]
         );
-        return result.lastID!;
+        return result.rows[0].id;
     },
 
     async findByUsername(username: string): Promise<User | undefined> {
-        const db = getDb();
-        return db.get<User>('SELECT * FROM users WHERE username = ?', [username]);
+        const pool = getDb();
+        const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+        return result.rows[0];
     }
 };
