@@ -22,6 +22,12 @@ const Login = () => {
                 body: JSON.stringify({ username, password }),
             });
 
+            // Check if response has content before parsing
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Server error: Invalid response format. Is the backend running?');
+            }
+
             const data = await response.json();
 
             if (!response.ok) {
@@ -31,7 +37,11 @@ const Login = () => {
             login(data.token);
             navigate('/sweets');
         } catch (err: any) {
-            setError(err.message);
+            if (err.message.includes('Failed to fetch')) {
+                setError('Cannot connect to server. Please make sure the backend is running.');
+            } else {
+                setError(err.message);
+            }
         }
     };
 
