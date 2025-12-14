@@ -57,7 +57,7 @@ const Cart = () => {
         <div className="dashboard-container" style={{ maxWidth: '800px' }}>
             <h1 className="dashboard-title">Shopping Cart</h1>
 
-            <div className="auth-card" style={{ padding: '0', overflow: 'hidden' }}>
+            <div className="auth-card" style={{ padding: '0', overflow: 'hidden', color: '#333' }}>
                 {items.map(item => (
                     <div key={item.sweetId} style={{
                         padding: '1.5rem',
