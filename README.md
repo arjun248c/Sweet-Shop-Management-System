@@ -27,7 +27,7 @@ npm install
 
 Create a `.env` file in the `backend` directory (if not exists) with:
 ```env
-JWT_SECRET=your_secret_key_here
+JWT_SECRET=*************
 PORT=3000
 ```
 *Note: No `DATABASE_URL` is needed for local development as it uses SQLite (`local.db`).*
