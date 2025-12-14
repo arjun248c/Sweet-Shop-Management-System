@@ -4,6 +4,7 @@ import { useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import SweetsList from './pages/SweetsList';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
@@ -23,7 +24,7 @@ function App() {
           path="/sweets"
           element={
             <ProtectedRoute>
-              <div>Sweets Inventory (Coming Soon)</div>
+              <SweetsList />
             </ProtectedRoute>
           }
         />
