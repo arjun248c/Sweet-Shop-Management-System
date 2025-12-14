@@ -5,7 +5,7 @@ let pool: Pool;
 export const initializeDatabase = async () => {
   if (pool) return; // Idempotency for serverless cold starts
   pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL,
     ssl: {
       rejectUnauthorized: false
     }
