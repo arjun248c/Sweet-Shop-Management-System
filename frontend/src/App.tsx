@@ -5,6 +5,7 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import SweetsList from './pages/SweetsList';
+import SweetForm from './pages/SweetForm';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
@@ -25,6 +26,22 @@ function App() {
           element={
             <ProtectedRoute>
               <SweetsList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/sweets/new"
+          element={
+            <ProtectedRoute>
+              <SweetForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/sweets/:id/edit"
+          element={
+            <ProtectedRoute>
+              <SweetForm />
             </ProtectedRoute>
           }
         />

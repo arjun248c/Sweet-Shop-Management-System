@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import SweetCard from '../components/SweetCard';
 import './Dashboard.css';
 
@@ -12,7 +13,8 @@ interface Sweet {
 }
 
 const SweetsList = () => {
-    const { token } = useAuth();
+    const { token, user } = useAuth();
+    const navigate = useNavigate();
     const [sweets, setSweets] = useState<Sweet[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);
@@ -49,9 +51,6 @@ const SweetsList = () => {
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         const query = e.target.value;
         setSearchQuery(query);
-        // Debounce check could be added here, for now simple direct call on change or separate button
-        // To keep it responsive, let's filter client side if list is small, or server side
-        // Plan said "Real-time filtering via API"
         const timeoutId = setTimeout(() => {
             fetchSweets(query);
         }, 300);
@@ -74,9 +73,30 @@ const SweetsList = () => {
                 throw new Error(errorData.error || 'Purchase failed');
             }
 
-            // Refresh list to show new stock
             await fetchSweets(searchQuery);
             alert('Purchase successful!');
+        } catch (err: any) {
+            alert(err.message);
+        }
+    };
+
+    const handleRestock = async (id: number, quantity: number) => {
+        try {
+            const response = await fetch(`/api/sweets/${id}/restock`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ quantity })
+            });
+
+            if (!response.ok) {
+                throw new Error('Restock failed');
+            }
+
+            await fetchSweets(searchQuery);
+            alert('Restock successful!');
         } catch (err: any) {
             alert(err.message);
         }
@@ -86,13 +106,25 @@ const SweetsList = () => {
         <div className="dashboard-container">
             <header className="dashboard-header">
                 <h1 className="dashboard-title">Our Sweets</h1>
-                <input
-                    type="text"
-                    placeholder="Search for sweets..."
-                    className="search-bar"
-                    value={searchQuery}
-                    onChange={handleSearch}
-                />
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <input
+                        type="text"
+                        placeholder="Search for sweets..."
+                        className="search-bar"
+                        value={searchQuery}
+                        onChange={handleSearch}
+                    />
+                    {// @ts-ignore
+                        user?.role === 'admin' && (
+                            <button
+                                className="btn-buy"
+                                style={{ margin: 0, padding: '0.8rem 1.5rem', background: '#333' }}
+                                onClick={() => navigate('/sweets/new')}
+                            >
+                                + Add Sweet
+                            </button>
+                        )}
+                </div>
             </header>
 
             {error && <div className="auth-error">{error}</div>}
@@ -106,6 +138,7 @@ const SweetsList = () => {
                             key={sweet.id}
                             sweet={sweet}
                             onPurchase={handlePurchase}
+                            onRestock={handleRestock}
                         />
                     ))}
                     {sweets.length === 0 && (
