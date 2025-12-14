@@ -19,4 +19,13 @@ app.use('/api/auth', authRoutes);
 app.use('/api/sweets', sweetsRoutes);
 app.use('/api/orders', orderRoutes);
 
+// Serve Static Frontend (Production)
+import path from 'path';
+const frontendPath = path.join(__dirname, '../../frontend/dist');
+app.use(express.static(frontendPath));
+
+app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
 export default app;
