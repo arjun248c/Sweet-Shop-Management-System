@@ -5,21 +5,19 @@ export interface User {
     role: 'admin' | 'customer';
 }
 
-import { getDb } from '../database';
+import { getSQLiteDB } from '../database-sqlite';
 
 export const UserModel = {
     async create(user: User): Promise<number> {
-        const pool = getDb();
-        const result = await pool.query(
-            'INSERT INTO users (username, password_hash, role) VALUES ($1, $2, $3) RETURNING id',
-            [user.username, user.password_hash, user.role]
-        );
-        return result.rows[0].id;
+        const db = getSQLiteDB();
+        const stmt = db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)');
+        const result = stmt.run(user.username, user.password_hash, user.role);
+        return result.lastInsertRowid as number;
     },
 
     async findByUsername(username: string): Promise<User | undefined> {
-        const pool = getDb();
-        const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
-        return result.rows[0];
+        const db = getSQLiteDB();
+        const stmt = db.prepare('SELECT * FROM users WHERE username = ?');
+        return stmt.get(username) as User | undefined;
     }
 };
